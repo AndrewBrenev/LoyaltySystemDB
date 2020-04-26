@@ -3,4 +3,6 @@
 *.~tst
 *.~sql
 *.docx
+*.doc
 *.csv
+*.txt
