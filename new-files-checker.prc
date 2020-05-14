@@ -27,7 +27,7 @@ begin
   for new_file in (
        SELECT *
        FROM FILES
-       where status = 'new' 
+       where status = 'new' and type = 'input'
   )
   loop
     begin

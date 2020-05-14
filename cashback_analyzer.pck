@@ -8,7 +8,8 @@ cashback_analyzer is
   type cashback_list is table of cashback_log%rowtype;
 
   -- Public function and procedure declarations
- function getReportForMonth(p_period date) return cashback_list; 
+ function getReportForMonth(p_period date) return cashback_analyzer.cashback_list; 
+ function getCurCashback(p_card_hash varchar2, p_period date) return cashback_log.amount%type;
  function getCashbackPersent(p_transaction TRANSACTIONS%rowtype) return number;
  function getCardId(p_hash Varchar2) return number;
  function getParentCardId(p_card_id number) return number;
@@ -54,6 +55,25 @@ cashback_analyzer is
        end if;
    end;
    
+   function getCurCashback(p_card_hash varchar2, p_period date) return cashback_log.amount%type is
+     parent_card_id number;
+     v_cashback cashback_log.amount%type;
+     cursor cashback_amount_cursor(p_date date, p_card_id number) is
+            select amount from cashback_log
+            where period = p_date and card_id = p_card_id;
+     begin
+       parent_card_id := getParentCardId(p_card_hash);
+       open cashback_amount_cursor(trunc(p_period,'MONTH'),parent_card_id);
+       fetch cashback_amount_cursor into v_cashback;
+       if cashback_amount_cursor%found then
+         close cashback_amount_cursor;
+         return v_cashback;
+         else 
+           close cashback_amount_cursor;
+           return 0;
+       end if;
+       end getCurCashback;
+   
    function getParentCardId(p_hash Varchar2) return number is
      v_card_id number;
      v_res number;
@@ -87,11 +107,31 @@ cashback_analyzer is
       end if;
     end;
     
-     function getReportForMonth(p_period date) return cashback_list is 
-      list cashback_list;
-      begin
-        return list;
-      end;
+   function getReportForMonth(p_period date) return cashback_analyzer.cashback_list is 
+     v_test_period date;
+     list cashback_analyzer.cashback_list;
+     rows NATURAL := 100;
+     cursor report_cursor (p_period date)
+     is
+            select * 
+            from cashback_log 
+            where period =  p_period 
+            and amount > (select value
+                          from configs
+                          where name = 'min_oper_count')
+            and amount > (select value
+                          from configs
+                          where name = 'min_cashbañk_amount');
+     begin
+       v_test_period := trunc(p_period,'MONTH');
+       open report_cursor(v_test_period);
+       loop
+            FETCH report_cursor BULK COLLECT INTO list;
+            exit when report_cursor%notfound;
+       end loop;
+       close report_cursor;
+       return list;
+     end;
      
 procedure processNewReturnRow(p_return_row_id Number) is
      v_return transactions%rowtype;
@@ -138,7 +178,7 @@ procedure processNewReturnRow(p_return_row_id Number) is
       
       if v_purcase_without_returns >= 0  then
         update cashback_log set 
-        amount = v_log_record.amount + v_purchase.cashback,
+        amount = v_log_record.amount + v_return.cashback,
         operations_count = v_log_record.operations_count - 1
         where log_id = v_log_record.log_id;      
       end if;
