@@ -7,6 +7,8 @@ CREATE TABLE CARDS  (
     client_id number NOT NULL,
     constraint card_fk FOREIGN KEY (parant_card) REFERENCES CARDS (card_id)
 );
+
+
 insert into cards values (1,'f46dda67c2de71ece19c0d3048d809f230b193d3',TO_DATE('2018/05/03', 'yyyy/mm/dd'),TO_DATE('2020/05/03', 'yyyy/mm/dd'),1,1);
 insert into cards values (2,'a53c3aa1982cb80b83f639f0cb916cf6ddd68ba1',TO_DATE('2018/06/29', 'yyyy/mm/dd'),TO_DATE('2020/11/29', 'yyyy/mm/dd'),1,2);
 insert into cards values (3,'c713ef2a39ca986ebaf7a29f1a8eab27669c5586',TO_DATE('2017/08/12', 'yyyy/mm/dd'),TO_DATE('2021/03/28', 'yyyy/mm/dd'),3,2);
@@ -95,6 +97,7 @@ CREATE TABLE MCC_PROGRAMS  (
 
 CREATE TABLE FILES  (
     file_id number PRIMARY KEY,
+    file_hash varchar2(12) not null UNIQUE,
     name varchar2(40) not null,
     type varchar2(12) not null,
     form_date date,
@@ -103,17 +106,16 @@ CREATE TABLE FILES  (
     err_code number,
     err_msg varchar2(2000),
    constraint files_date_check CHECK ( form_date <= upd_date),
-   constraint files_status_check CHECK  ( status IN ('new','processed','deny','partly_processed')),
-   constraint files_type_check CHECK  ( type IN ('input','output')),
-   constraint files_err_code_check CHECK  ( err_code IN (0,1,2,3,4))
+   constraint files_status_check CHECK  ( status IN ('new','processed','deny')),
+   constraint files_type_check CHECK  ( type IN ('input','output'))
 );
 
-insert into FILES (file_id,name,type,FORM_DATE,UPD_DATE,Status) values 
-(2342,'input.csv','input',TO_DATE('2020-04-10 19:34:34','YYYY-MM-DD HH24:MI:SS'),TO_DATE('2020-04-20 02:34:34','YYYY-MM-DD HH24:MI:SS'),'new');
-insert into FILES (file_id,name,type,FORM_DATE,UPD_DATE,Status) values 
-(2312,'lenta2704.csv','input',TO_DATE('2020-04-27 19:34:34','YYYY-MM-DD HH24:MI:SS'),TO_DATE('2020-04-29 02:20:34','YYYY-MM-DD HH24:MI:SS'),'new');
-insert into FILES (file_id,name,type,FORM_DATE,UPD_DATE,Status) values 
-(2198,'gazprom3004.csv','input',TO_DATE('2020-04-30 19:05:34','YYYY-MM-DD HH24:MI:SS'),TO_DATE('2020-04-30 19:05:40','YYYY-MM-DD HH24:MI:SS'),'new');
+insert into FILES (file_id,file_hash,name,type,FORM_DATE,Status) values 
+(2342,'D20200319ONL', 'input.csv','input',TO_DATE('2020-05-20 19:34:34','YYYY-MM-DD HH24:MI:SS'),'new');
+insert into FILES (file_id,file_hash,name,type,FORM_DATE,Status) values 
+(2312,'LE23N20334TA','lenta2704.csv','input',TO_DATE('2020-05-12 19:34:34','YYYY-MM-DD HH24:MI:SS'),'new');
+insert into FILES (file_id,file_hash,name,type,FORM_DATE,Status) values 
+(2198,'GZ34509BK','gazprom3004.csv','input',TO_DATE('2020-04-30 19:05:34','YYYY-MM-DD HH24:MI:SS'),'new');
 
 CREATE TABLE FILE_DATA  (
     row_id number PRIMARY KEY,
@@ -123,15 +125,16 @@ CREATE TABLE FILE_DATA  (
     err_code number,
     err_msg varchar2(2000),
     constraint file_data_fk FOREIGN KEY (file_id) REFERENCES FILES (file_id),
-   constraint file_data_status_check CHECK  ( status IN ('new','processed','error')),
-   constraint file_data_err_code_check CHECK  ( err_code IN (0,1,2,3,4))
-);
+   constraint file_data_status_check CHECK  ( status IN ('new','processed','error'))
+)
 
 insert into FILE_DATA (row_id,FILE_ID , VALUE,STATUS) values (1,2342,'H;D20200319ONL;20200320091500','new');
 insert into FILE_DATA (row_id,FILE_ID , VALUE,STATUS) values (2,2342,'P;f46dda67c2de71ece19c0d3048d809f230b193d3;12345678;20200319143746;150000;LENTA1234;5411;Касса 7 Терминал 71','new');
 insert into FILE_DATA (row_id,FILE_ID , VALUE,STATUS) values (3,2342,'P;f46dda67c2de71ece19c0d3048d809f230b193d3;12345679;20200319153214;20500;VILKA LOZHKA;5812;','new');
 insert into FILE_DATA (row_id,FILE_ID , VALUE,STATUS) values (4,2342,'R;f46dda67c2de71ece19c0d3048d809f230b193d3;13579R1;20200319120048;5700;PYATEROCHKA12;13579;Остаток чека 12300','new');
 insert into FILE_DATA (row_id,FILE_ID , VALUE,STATUS) values (5,2342,'T;2;1','new');
+
+
 
 
 CREATE TABLE TRANSACTIONS  (
@@ -146,6 +149,7 @@ CREATE TABLE TRANSACTIONS  (
     mcc_prog_id number,
     file_row number not null,
     cashback number not null,
+	comment varchar2(2000)
     constraint transaction_card_fk FOREIGN KEY (card_id) REFERENCES CARDS (card_id),
     constraint transaction_mrch_fk FOREIGN KEY (mrch_prog_id) REFERENCES MERCHANTS_PROGRAMS (merch_prog_id),
     constraint transaction_mcc_fk FOREIGN KEY (mcc_prog_id) REFERENCES MCC_PROGRAMS (mcc_prog_id),

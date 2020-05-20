@@ -5,19 +5,13 @@ create or replace package inserter is
   -- Purpose : insert file rows into tables & check data validity
   
   -- Public function and procedure declarations
-  procedure processHeader(p_data row_parser.header_row);
   function insertPurchase(p_data row_parser.purchase_row,p_row_id number) return number;
   function insertReturn(p_data in row_parser.return_row,p_row_id number) return number;
 
 end inserter;
 /
 create or replace package body inserter is
-procedure processHeader(p_data row_parser.header_row) is
-  unique_flag boolean := true;
-  begin
-    DBMS_OUTPUT.put_line('Wow! We are processing header now!');
-  end;
-  
+
 function insertPurchase(p_data in row_parser.purchase_row,p_row_id number) return number is
    v_new_id NUMBER;
    v_mcc_id NUMBER;
@@ -165,7 +159,7 @@ function insertPurchase(p_data in row_parser.purchase_row,p_row_id number) retur
     DBMS_OUTPUT.put_line('Exception: transaction is under more then one merchant/mcc programm!');
  end insertPurchase;
    
-    function insertReturn(p_data in row_parser.return_row,p_row_id number) return number is
+function insertReturn(p_data in row_parser.return_row,p_row_id number) return number is
      v_new_id NUMBER;
      v_merchant_id NUMBER;
      v_cashback_procent number;

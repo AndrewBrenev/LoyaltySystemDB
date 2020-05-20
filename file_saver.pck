@@ -6,7 +6,7 @@ create or replace package file_saver is
 
 
   -- Public function and procedure declarations
-  function createNewFile(p_file varchar2) return number;
+  function createNewFile(p_file varchar2,p_file_hash varchar2) return number;
   function insertRowIntoFile(p_file_id number, row_text varchar2) return number;
 
 end file_saver;
@@ -24,13 +24,13 @@ function insertRowIntoFile(p_file_id number, row_text varchar2) return number
     return v_row_count+1;
     end insertRowIntoFile;
 
-  function createNewFile(p_file varchar2) return number
+  function createNewFile(p_file varchar2,p_file_hash varchar2) return number
   is
   v_row_count number;
   begin
     select count(*) into v_row_count from files;
-    insert into FILES (file_id,name,type,FORM_DATE,UPD_DATE,Status) values 
-    (v_row_count+1,p_file,'output',sysdate,sysdate,'new');
+    insert into FILES (file_id,file_hash, files.  name,type,FORM_DATE,UPD_DATE,Status) values 
+    (v_row_count+1,p_file_hash,p_file,'output',sysdate,sysdate,'new');
     
     return v_row_count+1;
     exception

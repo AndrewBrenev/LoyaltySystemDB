@@ -16,6 +16,7 @@ create or replace package row_parser is
 
   file_format_error exception;
     pragma exception_init(file_format_error, -20002); 
+    
   -- Public type declarations
   type header_row IS RECORD (
        file_id        VARCHAR2(12),

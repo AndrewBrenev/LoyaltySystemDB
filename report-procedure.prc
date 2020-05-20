@@ -31,8 +31,8 @@ create or replace procedure generateReportForPeriod (p_period in Date) is
       v_report_id varchar2(40);
       
      begin
-       v_report_id:= 'report' || to_char(p_period,'yyyymm');
-       v_new_file_id := file_saver.createNewFile(v_report_id);
+       v_report_id:= 'REPORT' || to_char(p_period,'yyyymm');
+       v_new_file_id := file_saver.createNewFile(v_report_id,v_report_id||'.csv');
        
        --save the header
        v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
