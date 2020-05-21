@@ -64,7 +64,7 @@ function insertPurchase(p_data in row_parser.purchase_row,p_row_id number) retur
        select card_id into v_card_id from cards where pan = p_data.card_id;
      exception
        when no_data_found then
-         DBMS_OUTPUT.put_line('Exception: there is no card with sha : '|| p_data.card_id);
+         raise_application_error(-20001,'Incorrect card id "'||p_data.card_id||'"');
        when too_many_rows then
          DBMS_OUTPUT.put_line('Exception: there is more then one card in system with sha : '|| p_data.card_id);
      end;
@@ -73,7 +73,7 @@ function insertPurchase(p_data in row_parser.purchase_row,p_row_id number) retur
      open cur_mcc_id(p_data.mcc);
      fetch cur_mcc_id into v_mcc_id;
      if cur_mcc_id%notfound then
-       raise NO_DATA_FOUND;
+       raise_application_error(-20001,'Incorrect mcc "'||p_data.mcc||'". This mcc is not loaded into system.');
      end if;
      close cur_mcc_id;
      
@@ -81,7 +81,7 @@ function insertPurchase(p_data in row_parser.purchase_row,p_row_id number) retur
      open cur_merchant_id(p_data.merchant);
      fetch cur_merchant_id into v_merchant_id;
      if cur_merchant_id%notfound then
-       raise NO_DATA_FOUND;
+       raise_application_error(-20001,'Unknown merchant "'||p_data.merchant||'". This merchant is not loaded into system.');
      end if;
      close cur_merchant_id;
      
@@ -154,9 +154,9 @@ function insertPurchase(p_data in row_parser.purchase_row,p_row_id number) retur
      return v_new_id+1;
  exception 
    when no_data_found then
-     DBMS_OUTPUT.put_line('Exception: more then one merchant/mcc with the same code found!');
+     raise_application_error(-20001,sqlerrm);
   when too_many_rows then
-    DBMS_OUTPUT.put_line('Exception: transaction is under more then one merchant/mcc programm!');
+    raise_application_error(-20001,sqlerrm);
  end insertPurchase;
    
 function insertReturn(p_data in row_parser.return_row,p_row_id number) return number is
@@ -174,7 +174,7 @@ function insertReturn(p_data in row_parser.return_row,p_row_id number) return nu
        select count(*) into v_new_id from TRANSACTIONS;
        select count(*) into v_files_rows_cout from file_data;
        if p_row_id > v_files_rows_cout then 
-         raise TOO_MANY_ROWS;
+         raise_application_error(-20001,'Table "FILE_DATA" does not contain row '||p_row_id);
        end if;
        v_new_id:= v_new_id+1;
        v_card_id := cashback_analyzer.getCardId(p_data.card_id);
@@ -186,7 +186,7 @@ function insertReturn(p_data in row_parser.return_row,p_row_id number) return nu
      open cur_merchant_id(p_data.merchant);
      fetch cur_merchant_id into v_merchant_id;
      if cur_merchant_id%notfound then
-       raise NO_DATA_FOUND;
+       raise_application_error(-20001,'Unknown merchant:"'||p_data.merchant||'".');
      end if;
      close cur_merchant_id;
      
@@ -196,6 +196,13 @@ function insertReturn(p_data in row_parser.return_row,p_row_id number) return nu
     
      cashback_analyzer.processNewOperation(v_new_id);
      return v_new_id;
+     
+      exception 
+        when no_data_found then
+          raise_application_error(-20001,sqlerrm);
+        when too_many_rows then
+          raise_application_error(-20001,sqlerrm);
+     
     end insertReturn;
 
 end inserter;

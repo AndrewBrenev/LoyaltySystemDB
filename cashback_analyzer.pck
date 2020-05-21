@@ -34,9 +34,9 @@ cashback_analyzer is
      
      exception
        when no_data_found then
-         DBMS_OUTPUT.put_line('Exception: there is no card with sha : '|| p_hash);
+         raise_application_error(-20001,'Exception: there is no card with sha : '|| p_hash);
        when too_many_rows then
-         DBMS_OUTPUT.put_line('Exception: there is more then one card in system with sha : '|| p_hash);
+         raise_application_error(-20001,'Exception: there is more then one card in system with sha : '|| p_hash);
    end getCardId;
       
    function getParentCardId(p_card_id number) return number is
@@ -48,11 +48,18 @@ cashback_analyzer is
      open cur_get_parent_card(p_card_id);
      fetch cur_get_parent_card into p_parent_id;
      close cur_get_parent_card;
+     
      if p_card_id = p_parent_id then
        return p_card_id;
-       else 
+     else 
        return p_parent_id;
-       end if;
+     end if;
+     
+     exception
+       when no_data_found then
+         raise_application_error(-20001,'Exception: there is no card with id : '|| p_card_id);
+       when too_many_rows then
+         raise_application_error(-20001,'Exception: there is more then one card in system with id : '|| p_card_id);
    end;
    
    function getCurCashback(p_card_hash varchar2, p_period date) return cashback_log.amount%type is
@@ -68,10 +75,15 @@ cashback_analyzer is
        if cashback_amount_cursor%found then
          close cashback_amount_cursor;
          return v_cashback;
-         else 
-           close cashback_amount_cursor;
-           return 0;
+       else 
+         close cashback_amount_cursor;
+         return 0;
        end if;
+       exception
+       when row_parser.row_format_error then
+         raise;
+       when no_data_found then
+         raise_application_error(-20001,'Exception: there is no data about cashback for card : '|| p_card_hash );
        end getCurCashback;
    
    function getParentCardId(p_hash Varchar2) return number is
@@ -130,7 +142,7 @@ cashback_analyzer is
             exit when report_cursor%notfound;
        end loop;
        close report_cursor;
-       return list;
+       return list;         
      end;
      
 procedure processNewReturnRow(p_return_row_id Number) is
@@ -172,19 +184,23 @@ procedure processNewReturnRow(p_return_row_id Number) is
       --get current day
       v_cur_day := extract(day from v_return.trstn_date );
       
-       if trunc(v_return.trstn_date,'MONTH') = v_log_record.period OR 
+      if trunc(v_return.trstn_date,'MONTH') = v_log_record.period OR 
          add_months(trunc(v_return.trstn_date,'MONTH'),1) = v_log_record.period AND v_cur_day <= v_max_return_day
-         then
-      
-      if v_purcase_without_returns >= 0  then
-        update cashback_log set 
-        amount = v_log_record.amount + v_return.cashback,
-        operations_count = v_log_record.operations_count - 1
-        where log_id = v_log_record.log_id;      
+      then
+        if v_purcase_without_returns >= 0  then
+          update cashback_log set 
+          amount = v_log_record.amount + v_return.cashback,
+          operations_count = v_log_record.operations_count - 1
+          where log_id = v_log_record.log_id;   
+        else
+          raise_application_error(-20001,'Sum of returns is greater then amount of purchase.' );   
+        end if;
+      else
+        raise_application_error(-20001,'Unable to process old transaction '||v_return.hash || ' for period ' || to_char(v_return.trstn_date));
       end if;
+      close cur_get_user_cashback;
       
-      end if;
-       close cur_get_user_cashback;
+      
   end;
   
     procedure processNewPurchaseRow(p_purchase_row_id Number) is
@@ -223,7 +239,7 @@ procedure processNewReturnRow(p_return_row_id Number) is
      case v_trns_type
       when 'P' then processNewPurchaseRow(p_trnctn_id);
       when 'R' then  processNewReturnRow(p_trnctn_id);
-      else  raise_application_error(-20002,'Unknown transaction type "'||v_trns_type||'"');
+      else  raise_application_error(-20001,'Unknown transaction type "'||v_trns_type||'"');
      end case;
    end processNewOperation;
      

@@ -63,15 +63,16 @@ begin
         --save header
         v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
         'H;'|| new_fils(i).file_hash || ';' ||to_char(sysdate,'YYYYMMDDHH24MISS'));
-          
+        
+                            
+        new_purchases.delete();
+        new_returns.delete();
+        
+        --process file contain
         loop
           FETCH cur_new_rows BULK COLLECT INTO new_rows limit 5;
-     
           exit when cur_new_rows%notfound;
-                    
-          new_purchases.delete();
-          new_returns.delete();
-          
+        
            for j in new_rows.FIRST .. new_rows.LAST
              loop
                --parse text row to object
@@ -102,7 +103,12 @@ begin
                end case;
              end loop;
    
-               
+        END LOOP;
+        close cur_new_rows;
+
+         
+        if header_found and closer_found then
+              
              -- process new purchases
                if new_purchases.count > 0 then
                  v_cur_collection_iteam :=  new_purchases.FIRST;
@@ -113,6 +119,10 @@ begin
                     new_row_id number;
                     v_operation_cashback number;
                     v_current_cashback number;
+                    
+                    --error processing
+                    v_err_msg varchar2(2000);
+                    v_err_code number;
                   begin
                     new_row_id := inserter.insertPurchase(new_purchases(v_cur_collection_iteam),v_cur_collection_iteam);
                     
@@ -127,11 +137,21 @@ begin
                     
                   exception
                     when row_parser.row_format_error then
+                      v_err_msg :=sqlerrm;
+                      v_err_code := sqlcode;
+                    
                       v_e_rows_count := v_e_rows_count + 1;
-                      
+                      --save error to return file
                       v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
                       'E;'|| new_purchases(v_cur_collection_iteam).card_id|| ';' || new_purchases(v_cur_collection_iteam).purchare_id || ';' ||
-                      sqlcode || ';'||sqlerrm  );
+                      v_err_code || ';'||v_err_msg  );
+                      
+                      
+                      --set error to table
+                      update FILE_DATA set
+                      status = 'error', err_code = v_err_code, err_msg = v_err_msg
+                      where file_id = v_cur_collection_iteam;
+                      
                     when others then
                       dbms_output.put_line(sqlcode || ';'||sqlerrm  );
                      
@@ -144,14 +164,16 @@ begin
                if new_returns.count > 0 then
                  v_cur_collection_iteam :=  new_returns.FIRST;
                
-               
                 while v_cur_collection_iteam is not null
                 loop
                   declare
                     new_row_id number;
                     v_operation_cashback number;
                     v_current_cashback number;
-
+                    
+                    --error processing
+                    v_err_msg varchar2(2000);
+                    v_err_code number;
                   begin
                     
                     new_row_id := inserter.insertReturn(new_returns(v_cur_collection_iteam),v_cur_collection_iteam);
@@ -168,11 +190,19 @@ begin
                     
                   exception
                     when row_parser.row_format_error then
-                      v_e_rows_count := v_e_rows_count + 1;
+                      v_err_msg :=sqlerrm;
+                      v_err_code := sqlcode;
                       
+                      v_e_rows_count := v_e_rows_count + 1;
+                      -- save error to report file
                       v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
                       'E;'|| new_returns(v_cur_collection_iteam).card_id|| ';' || new_returns(v_cur_collection_iteam).return_id || ';' ||
-                      sqlcode || ';'||sqlerrm  );
+                      v_err_code || ';'||v_err_code  );
+                      
+                      --set error to table
+                      update FILE_DATA set
+                      status = 'error', err_code = v_err_code, err_msg = v_err_code
+                      where file_id = v_cur_collection_iteam;
                      
                   end;
                   v_cur_collection_iteam := new_purchases.next(v_cur_collection_iteam);
@@ -180,14 +210,11 @@ begin
               end if;
               
           
-        END LOOP;
-        close cur_new_rows;
+                 
+         --save tailer
+         v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
+         'T;'|| v_s_rows_count ||';'|| v_e_rows_count || ';' ); 
         
-        --save tailer
-        v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
-         'T;'|| v_s_rows_count ||';'|| v_e_rows_count || ';' );
-         
-        if header_found and closer_found then
           update FILES set
           status = 'processed', upd_date = sysdate
           where file_id = new_fils(i).file_id;

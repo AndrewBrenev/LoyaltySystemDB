@@ -38,7 +38,7 @@ create or replace package row_parser is
        return_id          VARCHAR2(12),
        return_date        DATE,
        amount             NUMBER(10),
-       merchant           VARCHAR2(30),
+       Hfmerchant           VARCHAR2(30),
        purchase_id        VARCHAR2(12),
        r_comment          VARCHAR2(2000)
        

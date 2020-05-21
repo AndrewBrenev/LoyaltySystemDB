@@ -22,6 +22,10 @@ function insertRowIntoFile(p_file_id number, row_text varchar2) return number
     (v_row_count+1,p_file_id,row_text,'new'); 
     
     return v_row_count+1;
+    
+    exception
+    when too_many_rows then
+      raise_application_error(-20001,'There is already exsists row with row_id ' ||v_row_count+1||', file_id : '||p_file_id  );
     end insertRowIntoFile;
 
   function createNewFile(p_file varchar2,p_file_hash varchar2) return number
@@ -29,13 +33,14 @@ function insertRowIntoFile(p_file_id number, row_text varchar2) return number
   v_row_count number;
   begin
     select count(*) into v_row_count from files;
-    insert into FILES (file_id,file_hash, files.  name,type,FORM_DATE,UPD_DATE,Status) values 
+    insert into FILES (file_id,file_hash, name,type,FORM_DATE,UPD_DATE,Status) values 
     (v_row_count+1,p_file_hash,p_file,'output',sysdate,sysdate,'new');
     
     return v_row_count+1;
     exception
-    when others then 
-      raise;
+    when too_many_rows then
+      raise_application_error(-20001,'There is already exsists file with file_id ' ||v_row_count+1||
+      ', file name : '||p_file|| ', file_hash : ' || p_file_hash  );
   end;
 
 
