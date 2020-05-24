@@ -82,6 +82,9 @@ begin
                  when 'H' then
                    if new_returns.count = 0 and new_purchases.count = 0 then
                       header_found := true;
+                      update FILE_DATA set
+                     status = 'processed'
+                     where row_id = new_rows(j).row_id;
                    else
                      raise_application_error(-20002,'Wrong file structure. H record is not firsrt row in  file.');
                    end if;
@@ -94,6 +97,10 @@ begin
                  when 'T' then
                    if  closer_p_count = new_data.t.p_count and closer_r_count = new_data.t.r_count then
                      closer_found := true;
+                     
+                     update FILE_DATA set
+                     status = 'processed'
+                     where row_id = new_rows(j).row_id;
                    else 
                      raise_application_error(-20002,'The number of P and R in the trailer does not match the actual.');
                    end if;
@@ -133,6 +140,10 @@ begin
                     'S;'|| new_purchases(v_cur_collection_iteam).card_id|| ';' || new_purchases(v_cur_collection_iteam).purchare_id || ';' ||
                      v_operation_cashback || ';'||v_current_cashback  );
                      
+                     update FILE_DATA set
+                     status = 'processed'
+                     where row_id = v_cur_collection_iteam;
+                     
                      v_s_rows_count := v_s_rows_count + 1;
                     
                   exception
@@ -150,7 +161,7 @@ begin
                       --set error to table
                       update FILE_DATA set
                       status = 'error', err_code = v_err_code, err_msg = v_err_msg
-                      where file_id = v_cur_collection_iteam;
+                      where row_id = v_cur_collection_iteam;
                       
                     when others then
                       dbms_output.put_line(sqlcode || ';'||sqlerrm  );
@@ -186,6 +197,10 @@ begin
                     'S;'|| new_returns(v_cur_collection_iteam).card_id|| ';' || new_returns(v_cur_collection_iteam).return_id || ';' ||
                      v_operation_cashback || ';'||v_current_cashback  );
                      
+                     update FILE_DATA set
+                     status = 'processed'
+                     where row_id = v_cur_collection_iteam;
+          
                      v_s_rows_count := v_s_rows_count + 1;
                     
                   exception
@@ -197,12 +212,12 @@ begin
                       -- save error to report file
                       v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
                       'E;'|| new_returns(v_cur_collection_iteam).card_id|| ';' || new_returns(v_cur_collection_iteam).return_id || ';' ||
-                      v_err_code || ';'||v_err_code  );
+                      v_err_code || ';'||v_err_msg  );
                       
                       --set error to table
                       update FILE_DATA set
-                      status = 'error', err_code = v_err_code, err_msg = v_err_code
-                      where file_id = v_cur_collection_iteam;
+                      status = 'error', err_code = v_err_code, err_msg = v_err_msg
+                      where row_id = v_cur_collection_iteam;
                      
                   end;
                   v_cur_collection_iteam := new_purchases.next(v_cur_collection_iteam);

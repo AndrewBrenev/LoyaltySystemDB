@@ -32,7 +32,7 @@ create or replace procedure generateReportForPeriod (p_period in Date) is
       
      begin
        v_report_id:= 'REPORT' || to_char(p_period,'yyyymm');
-       v_new_file_id := file_saver.createNewFile(v_report_id,v_report_id||'.csv');
+       v_new_file_id := file_saver.createNewFile(v_report_id||'.csv',v_report_id);
        
        --save the header
        v_new_row_id := file_saver.insertRowIntoFile(v_new_file_id,
