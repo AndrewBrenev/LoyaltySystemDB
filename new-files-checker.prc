@@ -24,7 +24,7 @@ create or replace procedure processNewFiles as
          where file_id = p_id AND status = 'new'
          order by row_id; 
          
-  v_limit number := 1;
+  v_limit number := 100;
 begin
   
 
@@ -32,8 +32,7 @@ begin
   open cur_new_files;
   loop
     FETCH cur_new_files BULK COLLECT INTO new_fils limit v_limit;
-    exit when cur_new_files%notfound;
-    
+       
     -- actions with new files
     FOR i IN new_fils.FIRST .. new_fils.LAST
     LOOP
@@ -70,9 +69,8 @@ begin
         
         --process file contain
         loop
-          FETCH cur_new_rows BULK COLLECT INTO new_rows limit 5;
-          exit when cur_new_rows%notfound;
-        
+          FETCH cur_new_rows BULK COLLECT INTO new_rows  limit v_limit;
+
            for j in new_rows.FIRST .. new_rows.LAST
              loop
                --parse text row to object
@@ -109,8 +107,9 @@ begin
                    raise_application_error(-20002,'Unknown row type at file with id "'||new_fils(i).file_id||'"');
                end case;
              end loop;
-   
-        END LOOP;
+
+           exit when cur_new_rows%notfound;
+        end loop;
         close cur_new_rows;
 
          
@@ -220,7 +219,7 @@ begin
                       where row_id = v_cur_collection_iteam;
                      
                   end;
-                  v_cur_collection_iteam := new_purchases.next(v_cur_collection_iteam);
+                  v_cur_collection_iteam := new_returns.next(v_cur_collection_iteam);
                 end loop;
               end if;
               
@@ -251,6 +250,8 @@ begin
       
       end;
     end loop;
+    
+    exit when cur_new_files%notfound;  
   end loop;
   close cur_new_files; 
 end processNewFiles;
