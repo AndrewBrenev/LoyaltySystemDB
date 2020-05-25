@@ -20,6 +20,17 @@ insert into cards values (8,'c4940c0f5162b254a0cd635109f434929c537977',TO_DATE('
 insert into cards values (9,'d554126d7ce6f3cfa9d1d371efa10837861a6913',TO_DATE('2020/04/29', 'yyyy/mm/dd'),TO_DATE('2020/12/28', 'yyyy/mm/dd'),9,5);
 insert into cards values (10,'606e0cf47ad6fe91461732139ecbeb014c8e2bad',TO_DATE('2019/03/17', 'yyyy/mm/dd'),TO_DATE('2022/07/05', 'yyyy/mm/dd'),9,5);
 insert into cards values (11,'22fcf0cd2cf07841d4214d6a14b2b28c1e15be24',TO_DATE('2019/10/24', 'yyyy/mm/dd'),TO_DATE('2020/11/29', 'yyyy/mm/dd'),3,7);
+insert into cards values (12,'55f8ae02e87ef35c3f427a2a0952c4229aa3f72d',TO_DATE('2018/01/30', 'yyyy/mm/dd'),TO_DATE('2020/05/30', 'yyyy/mm/dd'),12,11);
+insert into cards values (13,'433d2f2693cc4a879c4803a28ca805e41549016e',TO_DATE('2018/06/23', 'yyyy/mm/dd'),TO_DATE('2020/08/29', 'yyyy/mm/dd'),13,12);
+insert into cards values (14,'86c3389e8c0998ff8d081c52dc9ed8d0dfde7d34',TO_DATE('2017/08/13', 'yyyy/mm/dd'),TO_DATE('2021/12/28', 'yyyy/mm/dd'),14,94);
+insert into cards values (15,'4563d7966efc25b3e0809df994dc5333252b598b',TO_DATE('2019/09/12', 'yyyy/mm/dd'),TO_DATE('2021/01/30', 'yyyy/mm/dd'),4,32);
+insert into cards values (16,'d2f293ec39b3c749c949f39f312a0bbac6132232',TO_DATE('2018/10/15', 'yyyy/mm/dd'),TO_DATE('2020/10/20', 'yyyy/mm/dd'),16,21);
+insert into cards values (17,'e85b6ab3a50eff1bd95fc635312b55020d36c19e',TO_DATE('2020/01/10', 'yyyy/mm/dd'),TO_DATE('2021/01/06', 'yyyy/mm/dd'),17,53);
+insert into cards values (18,'84141db39dc8bd08ed7a63a4b4ff9df6586e9c10',TO_DATE('2019/12/27', 'yyyy/mm/dd'),TO_DATE('2022/02/25', 'yyyy/mm/dd'),17,3);
+insert into cards values (19,'67fb6f3b22ce0c14c20e5b053872162603b3723b',TO_DATE('2018/05/25', 'yyyy/mm/dd'),TO_DATE('2021/07/28', 'yyyy/mm/dd'),14,2);
+insert into cards values (20,'955f744d9c90389234a4b95c74c1bea2bbc952ce',TO_DATE('2018/09/28', 'yyyy/mm/dd'),TO_DATE('2020/09/27', 'yyyy/mm/dd'),20,45);
+insert into cards values (21,'a896bb10604c0aca53e06da74b84a4f58bc4998e',TO_DATE('2019/05/01', 'yyyy/mm/dd'),TO_DATE('2022/06/23', 'yyyy/mm/dd'),21,12);
+insert into cards values (22,'bdf6e50c7d715525ac818569179f08aa7d6ddc4e',TO_DATE('2019/03/25', 'yyyy/mm/dd'),TO_DATE('2021/08/21', 'yyyy/mm/dd'),21,34);
 
 CREATE TABLE CASHBACK_LOG  (
     log_id number PRIMARY KEY,
@@ -50,6 +61,15 @@ CREATE TABLE MERCHANTS  (
 insert into merchants values (1,'LENTA1234','Bolshay 2');
 insert into merchants values (2,'Gigant 12','Vibornaya 122');
 insert into merchants values (3,'LENTA6532','Gogolya 24');
+insert into merchants values (4,'Pyaterochka1','Gogolya 42');
+insert into merchants values (5,'Pyaterochka2','Pisareva 80/1');
+insert into merchants values (6,'Gorozhanka 34','Gogolya 45');
+insert into merchants values (7,'Magnit 98','Sportivnaya 3');
+insert into merchants values (8,'Magnit 6','Gogolya 42');
+insert into merchants values (9,'Gazprom 98','Primoskayz 109a');
+insert into merchants values (10,'Pyaterochka7','Lenina 4');
+insert into merchants values (11,'Magnit 12','Serayz 54');
+insert into merchants values (12,'Gazprom 123','Pivova 194');
 
 CREATE TABLE MCC  (
     mcc_id number PRIMARY KEY,
@@ -68,6 +88,9 @@ insert into mcc values (6,5411,'Supermarkets','Stores');
 insert into mcc values (7,5441,'Pastry','Stores');
 insert into mcc values (8,5717,'Alcohol','Stores');
 insert into mcc values (9,5814,'Fastfood','Stores');
+insert into mcc values (10,5482,'Metall','Others');
+insert into mcc values (11,5692,'Сlothes','Stores');
+insert into mcc values (12,5914,'Softwear','Stores');
 
 
 CREATE TABLE MERCHANTS_PROGRAMS  (
