@@ -1,8 +1,4 @@
-PL/SQL Developer Test script 3.0
-123
--- Created on 24.05.2020 by ¿Õƒ–≈… 
-declare
- v_test_size number := 10;
+create or replace procedure generateTestData(test_size in number)   is
  const_max_amount number := 300000;
 
  new_file_id number;
@@ -18,13 +14,13 @@ declare
  r_count number;
 begin
   files_count :=  round(dbms_random.value(1,10));
-  file_rows_count := v_test_size / files_count;
+  file_rows_count := test_size / files_count;
   
    for i in 1..files_count loop
      --create file
      file_name := 'test_'|| dbms_random.string('l',8)||'.csv';
      file_hash := dbms_random.string('x',12);
-     new_file_id := file_saver.createNewFile(file_name,file_hash);
+     new_file_id := file_saver.createNewFile(file_name,file_hash,true);
      
       p_count := 0;
       r_count := 0;
@@ -76,11 +72,12 @@ begin
             v_res_str := v_res_str || tmp_str || ';'; 
             
             new_row_id := file_saver.insertRowIntoFile(new_file_id,v_res_str);
+            
+            p_count := p_count + 1;
 
           else
             --create return
             v_res_str := 'R;';
-            new_row_id := file_saver.insertRowIntoFile(new_file_id,v_res_str);
             
             --select new card
             select count(*) into tmp_count from cards; 
@@ -111,17 +108,16 @@ begin
             select hash into tmp_str from transactions where type = 'P' and rownum = rand_tmp;
             v_res_str := v_res_str || tmp_str || ';';
             
-            
+            new_row_id := file_saver.insertRowIntoFile(new_file_id,v_res_str);
 
+            r_count := r_count + 1;
           end if;
         end loop;
       end;
-                 
       
       --save tailer
        new_row_id := file_saver.insertRowIntoFile(new_file_id,'T;'||p_count||';'||r_count);
        
   end loop;
-end;
-0
-0
+end generateTestData;
+/
