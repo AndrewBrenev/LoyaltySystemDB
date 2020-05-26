@@ -149,7 +149,6 @@ procedure processNewReturnRow(p_return_row_id Number) is
      v_return transactions%rowtype;
      v_log_record   cashback_log%rowtype;
      v_card_id number;
-     v_purcase_without_returns number;
      v_max_return_day  number;
      v_cur_day number;
      
@@ -158,12 +157,6 @@ procedure processNewReturnRow(p_return_row_id Number) is
             select * from cashback_log  where 
             period = v_period and  card_id = v_card_id;
             
-     cursor cur_sum_without_returns (p_parant_id number) is 
-            select amount  - (select sum(amount)
-                              from transactions
-                              where parant_transaction = p_parant_id )
-            from transactions 
-            where transaction_id = p_parant_id;
   begin
     -- get the return row
       select * into v_return from transactions where transaction_id = p_return_row_id;
@@ -174,9 +167,7 @@ procedure processNewReturnRow(p_return_row_id Number) is
       open cur_get_user_cashback(trunc(v_return.trstn_date,'MONTH'),v_card_id);
       fetch cur_get_user_cashback into v_log_record;
       
-      -- check sum of returns is less then purchase
-      open cur_sum_without_returns(v_return.parant_transaction);
-      fetch cur_sum_without_returns into v_purcase_without_returns;
+      
       
       --get max return day
       select value into v_max_return_day from configs where name = 'return_date';
@@ -187,14 +178,10 @@ procedure processNewReturnRow(p_return_row_id Number) is
       if trunc(v_return.trstn_date,'MONTH') = v_log_record.period OR 
          add_months(trunc(v_return.trstn_date,'MONTH'),1) = v_log_record.period AND v_cur_day <= v_max_return_day
       then
-        if v_purcase_without_returns >= 0  then
-          update cashback_log set 
-          amount = v_log_record.amount + v_return.cashback,
-          operations_count = v_log_record.operations_count - 1
-          where log_id = v_log_record.log_id;   
-        else
-          raise_application_error(-20001,'Sum of returns is greater then amount of purchase.' );   
-        end if;
+         update cashback_log set 
+         amount = v_log_record.amount + v_return.cashback,
+         operations_count = v_log_record.operations_count - 1
+         where log_id = v_log_record.log_id;    
       else
         raise_application_error(-20001,'Unable to process old transaction '||v_return.hash || ' for period ' || to_char(v_return.trstn_date));
       end if;

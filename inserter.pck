@@ -167,8 +167,17 @@ function insertReturn(p_data in row_parser.return_row,p_row_id number) return nu
      v_files_rows_cout number;
      v_parent_transaction transactions%rowtype;
      
-     cursor cur_merchant_id (p_mrch_comp Varchar2) is 
-     select merchant_id from MERCHANTS where company = p_mrch_comp;
+     v_purcase_without_returns number;
+      
+      cursor cur_sum_without_returns (p_parant_id number) is 
+            select amount  - (select sum(amount)
+                              from transactions
+                              where parant_transaction = p_parant_id )
+            from transactions 
+            where transaction_id = p_parant_id;
+     
+     cursor cur_merchant_id (p_mrch_comp Varchar2) is
+            select merchant_id from MERCHANTS where company = p_mrch_comp;
     
     begin
        select count(*) into v_new_id from TRANSACTIONS;
@@ -179,6 +188,19 @@ function insertReturn(p_data in row_parser.return_row,p_row_id number) return nu
        v_new_id:= v_new_id+1;
        v_card_id := cashback_analyzer.getCardId(p_data.card_id);
        select * into v_parent_transaction from transactions where HASH = p_data.purchase_id;
+       
+        -- check sum of returns is less then purchase
+      open cur_sum_without_returns(v_parent_transaction.transaction_id);
+      fetch cur_sum_without_returns into v_purcase_without_returns;
+      
+      if v_purcase_without_returns < 0 then
+        raise_application_error(-20001,'Sum of returns is greater then amount of purchase.' );   
+      end if;
+      
+      if v_parent_transaction.trstn_date > p_data.return_date then
+         raise_application_error(-20001,'Return transaction occurred before purchase.' );
+      end if;
+      
        
        v_cashback_procent := cashback_analyzer.getCashbackPersent(v_parent_transaction);
        
@@ -199,6 +221,8 @@ function insertReturn(p_data in row_parser.return_row,p_row_id number) return nu
      
       exception 
         when no_data_found then
+          raise_application_error(-20001,sqlerrm);
+        when DUP_VAL_ON_INDEX then
           raise_application_error(-20001,sqlerrm);
         when too_many_rows then
           raise_application_error(-20001,sqlerrm);
