@@ -13,8 +13,8 @@ create or replace procedure generateTestData(test_size in number)   is
  p_count number;
  r_count number;
 begin
-  files_count :=  round(dbms_random.value(1,10));
-  file_rows_count := test_size / files_count;
+  files_count :=  round(dbms_random.value(1,20));
+  file_rows_count := round ( test_size / files_count);
   
    for i in 1..files_count loop
      --create file
@@ -36,7 +36,7 @@ begin
        tmp_count number; 
 
       begin
-        for j in 1 .. files_count loop
+        for j in 1 .. file_rows_count loop
           transaction_type :=  round(dbms_random.value(0,1));
           if transaction_type = 0 then
             --create purcase
@@ -102,10 +102,16 @@ begin
             select company into tmp_str from merchants where merchant_id = rand_tmp;
             v_res_str := v_res_str || tmp_str || ';';
             
-            --add parant transaction id
-            select count(*) into tmp_count from transactions where type = 'P';
-            rand_tmp := round(dbms_random.value(1,tmp_count));
-            select hash into tmp_str from transactions where type = 'P' and rownum = rand_tmp;
+            --get random purchase transaction
+            select hash
+            into tmp_str
+            from (
+                   select hash
+                   from transactions
+                   where type = 'P'
+                   order by dbms_random.value )
+            where rownum = 1;
+            
             v_res_str := v_res_str || tmp_str || ';';
             
             new_row_id := file_saver.insertRowIntoFile(new_file_id,v_res_str);
